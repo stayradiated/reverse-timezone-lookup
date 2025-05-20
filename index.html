@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" >
+    <title>Timezone Finder</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    >
+    <style>
+        /* General body styling */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6; /* gray-100 */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: 0;
+            padding: 1rem; /* p-4 */
+            box-sizing: border-box;
+        }
+
+        /* Main container for the application */
+        .app-container {
+            background-color: #ffffff; /* white */
+            padding: 1.5rem; /* p-6 */
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-xl */
+            width: 100%;
+            max-width: 32rem; /* max-w-lg */
+        }
+
+        /* Title styling */
+        .app-title {
+            font-size: 1.5rem; /* text-2xl */
+            font-weight: 700; /* font-bold */
+            text-align: center;
+            color: #1f2937; /* text-gray-800 */
+            margin-bottom: 1.5rem; /* mb-6 */
+        }
+
+        /* Form elements container */
+        .form-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem; /* space-y-4 */
+        }
+
+        /* Input field labels */
+        .input-label {
+            display: block;
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 500; /* font-medium */
+            color: #374151; /* text-gray-700 */
+            margin-bottom: 0.25rem; /* mb-1 */
+        }
+
+        /* Text and number input fields */
+        .text-input {
+            margin-top: 0.25rem; /* mt-1 */
+            display: block;
+            width: 100%;
+            padding: 0.5rem 0.75rem; /* px-3 py-2 */
+            background-color: #ffffff; /* bg-white */
+            border: 1px solid #d1d5db; /* border-gray-300 */
+            border-radius: 0.375rem; /* rounded-md */
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+            font-size: 0.875rem; /* sm:text-sm */
+            box-sizing: border-box;
+        }
+        .text-input:focus {
+            outline: none;
+            border-color: #4f46e5; /* focus:border-indigo-500 */
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.3); /* focus:ring-indigo-500 (approximated) */
+        }
+
+        /* Submit button styling */
+        .submit-button {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #4f46e5; /* bg-indigo-600 */
+            color: #ffffff; /* text-white */
+            font-weight: 600; /* font-semibold */
+            padding: 0.625rem 1rem; /* py-2.5 px-4 */
+            border-radius: 0.5rem; /* rounded-lg */
+            border: none;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */
+            cursor: pointer;
+            transition: background-color 0.15s ease-in-out;
+        }
+        .submit-button:hover {
+            background-color: #4338ca; /* hover:bg-indigo-700 */
+        }
+        .submit-button:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.5), 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 */
+        }
+        .submit-button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+        }
+
+
+        /* Loader animation (already custom) */
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+            display: none;
+            margin-left: 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Error message styling */
+        .error-message {
+            margin-top: 1rem; /* mt-4 */
+            color: #dc2626; /* text-red-600 */
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 500; /* font-medium */
+        }
+
+        /* Results area styling */
+        .results-section {
+            margin-top: 1.5rem; /* mt-6 */
+        }
+        .results-title {
+            font-size: 1.25rem; /* text-xl */
+            font-weight: 600; /* font-semibold */
+            color: #374151; /* text-gray-700 */
+            margin-bottom: 0.75rem; /* mb-3 */
+        }
+        .results-list {
+            background-color: #f9fafb; /* bg-gray-50 */
+            padding: 1rem; /* p-4 */
+            border-radius: 0.5rem; /* rounded-lg */
+            max-height: 24rem; /* max-h-96 */
+            overflow-y: auto;
+            font-size: 0.875rem; /* text-sm */
+        }
+        .results-placeholder {
+            color: #6b7280; /* text-gray-500 */
+        }
+
+        /* Individual result item styling */
+        .result-item {
+            padding: 0.5rem 0; /* p-2 (vertical only, horizontal comes from parent) */
+            border-bottom: 1px solid #e5e7eb; /* border-b border-gray-200 */
+        }
+        .result-item:last-child {
+            border-bottom: none; /* last:border-b-0 */
+        }
+        .result-item-timezone {
+            font-weight: 600; /* font-semibold */
+            color: #4338ca; /* text-indigo-700 */
+        }
+        .result-item-time {
+            color: #1f2937; /* text-gray-800 */
+        }
+        .result-item-detail { /* For diff and pop */
+            font-size: 0.75rem; /* text-xs */
+            margin-left: 0.5rem; /* ml-2 */
+        }
+        .result-item-diff {
+            color: #6b7280; /* text-gray-500 */
+        }
+        .result-item-pop {
+            color: #3b82f6; /* text-blue-500 */
+        }
+
+        /* Footer text styling */
+        .footer-text {
+            font-size: 0.75rem; /* text-xs */
+            color: #9ca3af; /* text-gray-400 */
+            margin-top: 1.5rem; /* mt-6 */
+            text-align: center;
+        }
+
+        /* Responsive adjustments (sm: prefix in Tailwind) */
+        @media (min-width: 640px) {
+            .app-container {
+                padding: 2rem; /* sm:p-8 */
+            }
+            .app-title {
+                font-size: 1.875rem; /* sm:text-3xl */
+            }
+            .text-input {
+                 /* font-size: 0.875rem; /* sm:text-sm is already default for text-input */
+            }
+        }
+    </style>
+  </head>
+  <body>
+    <div class="app-container">
+      <h1 class="app-title">Timezone Finder</h1>
+
+      <div class="form-controls">
+        <div>
+          <label for="localTime" class="input-label">
+            Your Target Time (HH:mm):
+          </label>
+          <input
+            type="text"
+            id="localTime"
+            value="08:42"
+            class="text-input"
+            placeholder="e.g., 08:42"
+          >
+        </div>
+
+        <div>
+          <label for="threshold" class="input-label">
+            Threshold (minutes):
+          </label>
+          <input
+            type="number"
+            id="threshold"
+            value="15"
+            class="text-input"
+            placeholder="e.g., 15"
+          >
+        </div>
+
+        <button id="findButton" class="submit-button">
+          Find Timezones
+          <div id="loader" class="loader"></div>
+        </button>
+      </div>
+
+      <div id="errorMessage" class="error-message"></div>
+
+      <div class="results-section">
+        <h2 class="results-title">Matching Timezones:</h2>
+        <div id="results" class="results-list">
+          <p class="results-placeholder">Results will appear here...</p>
+        </div>
+      </div>
+      <p class="footer-text">
+        This tool uses the built-in Intl API. Population data is illustrative.
+        Your actual local time is: <span id="userCurrentTime"></span>
+      </p>
+    </div>
+
+    <script>
+/**
+ * Comprehensive list of global timezones with their estimated populations
+ * Timezones are organized by UTC offset from west to east
+ * Population figures are estimates as of 2025
+ */
+
+const timezonePopulations = {
+    // UTC-12:00 to UTC-08:00 (Pacific)
+    "Pacific/Baker": 0,                // Uninhabited (UTC-12:00)
+    "Pacific/Niue": 1600,              // Niue (UTC-11:00)
+    "Pacific/Midway": 0,               // Uninhabited US territory (UTC-11:00)
+    "Pacific/Pago_Pago": 55000,        // American Samoa (UTC-11:00)
+    "Pacific/Honolulu": 1400000,       // Hawaii (UTC-10:00)
+    "Pacific/Tahiti": 280000,          // French Polynesia (UTC-10:00)
+    "Pacific/Rarotonga": 15000,        // Cook Islands (UTC-10:00)
+    "America/Adak": 300,               // Aleutian Islands, Alaska (UTC-10:00/UTC-09:00 DST)
+    "Pacific/Marquesas": 9300,         // Marquesas Islands (UTC-09:30, unusual offset)
+    "Pacific/Gambier": 1300,           // French Polynesia (UTC-09:00) 
+    "America/Anchorage": 400000,       // Alaska (UTC-09:00)
+    "America/Juneau": 32000,           // Southeast Alaska (UTC-09:00)
+    "America/Nome": 3700,              // Alaska (UTC-09:00)
+    "America/Sitka": 8900,             // Alaska (UTC-09:00)
+    "Pacific/Pitcairn": 50,            // Pitcairn Islands (UTC-08:00)
+    "America/Tijuana": 2100000,        // Baja California (UTC-08:00/UTC-07:00 DST)
+    "America/Los_Angeles": 55000000,   // US West Coast (UTC-08:00/UTC-07:00 DST)
+    "America/Vancouver": 2700000,      // British Columbia, Canada (UTC-08:00/UTC-07:00 DST)
+    "America/Whitehorse": 42000,       // Yukon, Canada (UTC-08:00/UTC-07:00 DST)
+    
+    // UTC-07:00 to UTC-05:00 (North American Mountain, Central, Eastern)
+    "America/Phoenix": 7500000,        // Arizona (UTC-07:00, no DST)
+    "America/Chihuahua": 3400000,      // Chihuahua, Mexico (UTC-07:00) 
+    "America/Denver": 12000000,        // US Mountain Time (UTC-07:00/UTC-06:00 DST)
+    "America/Edmonton": 1500000,       // Alberta, Canada (UTC-07:00/UTC-06:00 DST)
+    "America/Mazatlan": 500000,        // Mexico (UTC-07:00/UTC-06:00 DST)
+    "America/Dawson_Creek": 13000,     // British Columbia, Canada (UTC-07:00, no DST)
+    "Pacific/Easter": 8000,            // Easter Island (UTC-06:00/UTC-05:00 DST)
+    "Pacific/Galapagos": 30000,        // Galapagos Islands (UTC-06:00)
+    "America/Belize": 400000,          // Belize (UTC-06:00, no DST)
+    "America/Mexico_City": 22000000,   // Mexico City (UTC-06:00)
+    "America/Chicago": 92000000,       // US Central Time (UTC-06:00/UTC-05:00 DST)
+    "America/Regina": 230000,          // Saskatchewan, Canada (UTC-06:00, no DST)
+    "America/Winnipeg": 750000,        // Manitoba, Canada (UTC-06:00/UTC-05:00 DST)
+    "America/Jamaica": 2800000,        // Jamaica (UTC-05:00, no DST)
+    "America/Bogota": 51000000,        // Colombia (UTC-05:00, no DST)
+    "America/New_York": 130000000,     // US Eastern Time (UTC-05:00/UTC-04:00 DST)
+    "America/Toronto": 6300000,        // Ontario, Canada (UTC-05:00/UTC-04:00 DST)
+    "America/Havana": 11100000,        // Cuba (UTC-05:00/UTC-04:00 DST)
+    "America/Detroit": 670000,         // Michigan, USA (UTC-05:00/UTC-04:00 DST)
+    "America/Cancun": 900000,          // Quintana Roo, Mexico (UTC-05:00, no DST)
+    "America/Indiana/Indianapolis": 870000, // Indiana, USA (UTC-05:00/UTC-04:00 DST)
+    
+    // UTC-04:00 to UTC-02:00 (Atlantic)
+    "America/Caracas": 28000000,       // Venezuela (UTC-04:00, no DST)
+    "America/Halifax": 1000000,        // Atlantic Canada (UTC-04:00/UTC-03:00 DST)
+    "America/Santiago": 19000000,      // Chile (UTC-04:00/UTC-03:00 DST)
+    "America/Santo_Domingo": 10800000, // Dominican Republic (UTC-04:00)
+    "America/Puerto_Rico": 3100000,    // Puerto Rico (UTC-04:00, no DST)
+    "America/La_Paz": 11700000,        // Bolivia (UTC-04:00)
+    "America/Manaus": 2200000,         // Brazil (UTC-04:00)
+    "America/Barbados": 287000,        // Barbados (UTC-04:00)
+    "America/Martinique": 375000,      // Martinique (UTC-04:00)
+    "Atlantic/Bermuda": 63000,         // Bermuda (UTC-04:00/UTC-03:00 DST)
+    "America/St_Johns": 520000,        // Newfoundland (UTC-03:30)
+    "America/Sao_Paulo": 85000000,     // Brazil East (UTC-03:00)
+    "America/Montevideo": 3500000,     // Uruguay (UTC-03:00) 
+    "America/Buenos_Aires": 45000000,  // Argentina (UTC-03:00)
+    "America/Godthab": 56000,          // Nuuk, Greenland (UTC-03:00/UTC-02:00 DST)
+    "America/Cayenne": 300000,         // French Guiana (UTC-03:00)
+    "America/Paramaribo": 600000,      // Suriname (UTC-03:00)
+    "America/Fortaleza": 4000000,      // Brazil (UTC-03:00)
+    "Atlantic/Stanley": 3500,          // Falkland Islands (UTC-03:00)
+    "America/Noronha": 3000,           // Fernando de Noronha (UTC-02:00)
+    "Atlantic/South_Georgia": 0,       // South Georgia (UTC-02:00)
+    
+    // UTC-01:00 to UTC+00:00 (Eastern Atlantic, GMT)
+    "Atlantic/Cape_Verde": 560000,     // Cape Verde (UTC-01:00)
+    "Atlantic/Azores": 240000,         // Azores (UTC-01:00/UTC+00:00 DST)
+    "Europe/London": 68000000,         // UK (UTC+00:00/UTC+01:00 DST)
+    "Europe/Dublin": 5000000,          // Ireland (UTC+00:00/UTC+01:00 DST)
+    "Europe/Lisbon": 10300000,         // Portugal (UTC+00:00/UTC+01:00 DST)
+    "Europe/Jersey": 108000,           // Jersey (UTC+00:00/UTC+01:00 DST)
+    "Europe/Guernsey": 63000,          // Guernsey (UTC+00:00/UTC+01:00 DST)
+    "Europe/Isle_of_Man": 85000,       // Isle of Man (UTC+00:00/UTC+01:00 DST)
+    "Atlantic/Reykjavik": 370000,      // Iceland (UTC+00:00, no DST)
+    "Atlantic/Faroe": 52000,           // Faroe Islands (UTC+00:00/UTC+01:00 DST)
+    "Atlantic/Madeira": 250000,        // Madeira (UTC+00:00/UTC+01:00 DST)
+    "Atlantic/St_Helena": 6000,        // Saint Helena (UTC+00:00)
+    "Africa/Accra": 31000000,          // Ghana (UTC+00:00, no DST)
+    "Africa/Casablanca": 37000000,     // Morocco (UTC+00:00/UTC+01:00 variable DST)
+    "Africa/Monrovia": 5100000,        // Liberia (UTC+00:00)
+    "Africa/Dakar": 17000000,          // Senegal (UTC+00:00)
+    "Atlantic/Canary": 2200000,        // Canary Islands (UTC+00:00/UTC+01:00 DST)
+    
+    // UTC+01:00 to UTC+03:00 (Central European, Eastern European)
+    "Africa/Lagos": 206000000,         // Nigeria (UTC+01:00)
+    "Europe/Paris": 67000000,          // France (UTC+01:00/UTC+02:00 DST)
+    "Europe/Berlin": 83000000,         // Germany (UTC+01:00/UTC+02:00 DST)
+    "Europe/Rome": 60000000,           // Italy (UTC+01:00/UTC+02:00 DST)
+    "Europe/Madrid": 47000000,         // Spain (UTC+01:00/UTC+02:00 DST)
+    "Europe/Andorra": 77000,           // Andorra (UTC+01:00/UTC+02:00 DST)
+    "Europe/Luxembourg": 640000,       // Luxembourg (UTC+01:00/UTC+02:00 DST)
+    "Europe/Monaco": 39000,            // Monaco (UTC+01:00/UTC+02:00 DST)
+    "Europe/Malta": 520000,            // Malta (UTC+01:00/UTC+02:00 DST)
+    "Europe/Vatican": 800,             // Vatican City (UTC+01:00/UTC+02:00 DST)
+    "Europe/San_Marino": 34000,        // San Marino (UTC+01:00/UTC+02:00 DST)
+    "Europe/Gibraltar": 34000,         // Gibraltar (UTC+01:00/UTC+02:00 DST)
+    "Europe/Busingen": 1500,           // German exclave in Switzerland (UTC+01:00/UTC+02:00 DST)
+    "Europe/Vaduz": 39000,             // Liechtenstein (UTC+01:00/UTC+02:00 DST)
+    "Africa/Algiers": 44000000,        // Algeria (UTC+01:00, no DST)
+    "Europe/Stockholm": 10400000,      // Sweden (UTC+01:00/UTC+02:00 DST)
+    "Europe/Warsaw": 38000000,         // Poland (UTC+01:00/UTC+02:00 DST)
+    "Europe/Amsterdam": 17500000,      // Netherlands (UTC+01:00/UTC+02:00 DST)
+    "Europe/Brussels": 11500000,       // Belgium (UTC+01:00/UTC+02:00 DST)
+    "Europe/Vienna": 9000000,          // Austria (UTC+01:00/UTC+02:00 DST)
+    "Europe/Zurich": 8700000,          // Switzerland (UTC+01:00/UTC+02:00 DST)
+    "Europe/Prague": 10700000,         // Czech Republic (UTC+01:00/UTC+02:00 DST)
+    "Europe/Bratislava": 5500000,      // Slovakia (UTC+01:00/UTC+02:00 DST)
+    "Europe/Copenhagen": 5800000,      // Denmark (UTC+01:00/UTC+02:00 DST)
+    "Europe/Oslo": 5400000,            // Norway (UTC+01:00/UTC+02:00 DST)
+    "Europe/Budapest": 9700000,        // Hungary (UTC+01:00/UTC+02:00 DST)
+    "Europe/Ljubljana": 2100000,       // Slovenia (UTC+01:00/UTC+02:00 DST)
+    "Europe/Zagreb": 4000000,          // Croatia (UTC+01:00/UTC+02:00 DST)
+    "Europe/Belgrade": 6800000,        // Serbia (UTC+01:00/UTC+02:00 DST)
+    "Europe/Sarajevo": 3300000,        // Bosnia and Herzegovina (UTC+01:00/UTC+02:00 DST)
+    "Europe/Skopje": 2100000,          // North Macedonia (UTC+01:00/UTC+02:00 DST)
+    "Europe/Podgorica": 620000,        // Montenegro (UTC+01:00/UTC+02:00 DST)
+    "Europe/Tirane": 2800000,          // Albania (UTC+01:00/UTC+02:00 DST)
+    "Europe/Mariehamn": 30000,         // Åland Islands (UTC+02:00/UTC+03:00 DST)
+    "Africa/Tunis": 12000000,          // Tunisia (UTC+01:00)
+    "Africa/Kinshasa": 15000000,       // DR Congo (UTC+01:00)
+    "Africa/Cairo": 104000000,         // Egypt (UTC+02:00)
+    "Europe/Kaliningrad": 490000,      // Russia (Kaliningrad) (UTC+02:00)
+    "Europe/Athens": 10600000,         // Greece (UTC+02:00/UTC+03:00 DST)
+    "Asia/Jerusalem": 9300000,         // Israel (UTC+02:00/UTC+03:00 DST)
+    "Europe/Helsinki": 5500000,        // Finland (UTC+02:00/UTC+03:00 DST)
+    "Europe/Kyiv": 43000000,           // Ukraine (UTC+02:00/UTC+03:00 DST)
+    "Europe/Bucharest": 19000000,      // Romania (UTC+02:00/UTC+03:00 DST)
+    "Europe/Chisinau": 2600000,        // Moldova (UTC+02:00/UTC+03:00 DST)
+    "Europe/Simferopol": 1900000,      // Crimea (UTC+03:00)
+    "Africa/Johannesburg": 60000000,   // South Africa (UTC+02:00, no DST)
+    "Europe/Sofia": 6900000,           // Bulgaria (UTC+02:00/UTC+03:00 DST)
+    "Europe/Riga": 1900000,            // Latvia (UTC+02:00/UTC+03:00 DST)
+    "Europe/Tallinn": 1300000,         // Estonia (UTC+02:00/UTC+03:00 DST)
+    "Europe/Vilnius": 2800000,         // Lithuania (UTC+02:00/UTC+03:00 DST)
+    "Africa/Tripoli": 6900000,         // Libya (UTC+02:00)
+    "Africa/Khartoum": 44000000,       // Sudan (UTC+02:00)
+    "Asia/Amman": 10200000,            // Jordan (UTC+02:00/UTC+03:00 DST)
+    "Asia/Beirut": 6800000,            // Lebanon (UTC+02:00/UTC+03:00 DST)
+    "Asia/Damascus": 17500000,         // Syria (UTC+02:00/UTC+03:00 DST)
+    "Europe/Istanbul": 85000000,       // Turkey (UTC+03:00)
+    "Europe/Moscow": 145000000,        // Russia (Moscow) (UTC+03:00)
+    "Europe/Volgograd": 1000000,       // Russia (Volgograd) (UTC+03:00)
+    "Europe/Kirov": 500000,            // Russia (Kirov) (UTC+03:00)
+    "Europe/Astrakhan": 530000,        // Russia (Astrakhan) (UTC+04:00)
+    "Europe/Saratov": 840000,          // Russia (Saratov) (UTC+04:00)
+    "Europe/Ulyanovsk": 620000,        // Russia (Ulyanovsk) (UTC+04:00)
+    "Africa/Nairobi": 54000000,        // Kenya (UTC+03:00, no DST)
+    "Asia/Baghdad": 42000000,          // Iraq (UTC+03:00, no DST)
+    "Asia/Riyadh": 35000000,           // Saudi Arabia (UTC+03:00, no DST)
+    "Europe/Minsk": 9400000,           // Belarus (UTC+03:00)
+    "Africa/Addis_Ababa": 115000000,   // Ethiopia (UTC+03:00)
+    "Indian/Antananarivo": 28000000,   // Madagascar (UTC+03:00)
+    "Indian/Comoro": 870000,           // Comoros (UTC+03:00)
+    "Indian/Mayotte": 270000,          // Mayotte (UTC+03:00)
+    "Asia/Kuwait": 4300000,            // Kuwait (UTC+03:00)
+    "Asia/Qatar": 2900000,             // Qatar (UTC+03:00)
+    "Asia/Bahrain": 1700000,           // Bahrain (UTC+03:00)
+    
+    // UTC+03:30 to UTC+05:30 (Middle East, South Asia)
+    "Asia/Tehran": 85000000,           // Iran (UTC+03:30)
+    "Asia/Dubai": 10000000,            // UAE (UTC+04:00)
+    "Asia/Baku": 10200000,             // Azerbaijan (UTC+04:00)
+    "Asia/Tbilisi": 3700000,           // Georgia (UTC+04:00)
+    "Asia/Yerevan": 2900000,           // Armenia (UTC+04:00)
+    "Asia/Muscat": 5100000,            // Oman (UTC+04:00)
+    "Europe/Samara": 1100000,          // Russia (UTC+04:00)
+    "Indian/Mahe": 98000,              // Seychelles (UTC+04:00)
+    "Indian/Mauritius": 1300000,       // Mauritius (UTC+04:00)
+    "Indian/Reunion": 860000,          // Réunion (UTC+04:00)
+    "Indian/Kerguelen": 100,           // French Southern Territories (UTC+05:00)
+    "Asia/Kabul": 39000000,            // Afghanistan (UTC+04:30)
+    "Asia/Karachi": 220000000,         // Pakistan (UTC+05:00)
+    "Asia/Tashkent": 35000000,         // Uzbekistan (UTC+05:00)
+    "Asia/Yekaterinburg": 4500000,     // Russia (Yekaterinburg) (UTC+05:00)
+    "Asia/Dushanbe": 9500000,          // Tajikistan (UTC+05:00)
+    "Asia/Ashgabat": 6000000,          // Turkmenistan (UTC+05:00)
+    "Indian/Maldives": 540000,         // Maldives (UTC+05:00)
+    "Asia/Colombo": 22000000,          // Sri Lanka (UTC+05:30)
+    "Asia/Kolkata": 1400000000,        // India (UTC+05:30)
+    
+    // UTC+05:45 to UTC+07:00 (Nepal, Bangladesh, Southeast Asia)
+    "Asia/Kathmandu": 30000000,        // Nepal (UTC+05:45)
+    "Asia/Dhaka": 170000000,           // Bangladesh (UTC+06:00)
+    "Asia/Almaty": 19000000,           // Kazakhstan (UTC+06:00)
+    "Asia/Omsk": 1100000,              // Russia (Omsk) (UTC+06:00)
+    "Asia/Thimphu": 770000,            // Bhutan (UTC+06:00)
+    "Asia/Bishkek": 6600000,           // Kyrgyzstan (UTC+06:00)
+    "Indian/Chagos": 3000,             // British Indian Ocean Territory (UTC+06:00)
+    "Asia/Yangon": 54000000,           // Myanmar (UTC+06:30)
+    "Indian/Cocos": 600,               // Cocos (Keeling) Islands (UTC+06:30)
+    "Asia/Bangkok": 70000000,          // Thailand (UTC+07:00)
+    "Asia/Ho_Chi_Minh": 97000000,      // Vietnam (UTC+07:00)
+    "Asia/Vientiane": 7300000,         // Laos (UTC+07:00)
+    "Asia/Jakarta": 276000000,         // Indonesia (Western) (UTC+07:00)
+    "Asia/Krasnoyarsk": 1100000,       // Russia (Krasnoyarsk) (UTC+07:00)
+    "Asia/Hovd": 90000,                // Mongolia (UTC+07:00)
+    
+    // UTC+08:00 (East Asia)
+    "Asia/Shanghai": 1400000000,       // China (UTC+08:00)
+    "Asia/Hong_Kong": 7500000,         // Hong Kong (UTC+08:00)
+    "Asia/Singapore": 5700000,         // Singapore (UTC+08:00)
+    "Asia/Taipei": 23500000,           // Taiwan (UTC+08:00)
+    "Asia/Kuala_Lumpur": 32000000,     // Malaysia (UTC+08:00)
+    "Asia/Manila": 111000000,          // Philippines (UTC+08:00)
+    "Asia/Makassar": 9000000,          // Indonesia (Central) (UTC+08:00)
+    "Asia/Irkutsk": 600000,            // Russia (Irkutsk) (UTC+08:00)
+    "Asia/Ulaanbaatar": 3300000,       // Mongolia (UTC+08:00)
+    "Asia/Choibalsan": 40000,          // Mongolia (UTC+08:00)
+    "Australia/Perth": 2500000,        // Western Australia (UTC+08:00)
+    "Australia/Eucla": 400,            // Western Australia (UTC+08:45)
+    
+    // UTC+09:00 to UTC+10:00 (Japan, Korea, Eastern Australia)
+    "Asia/Tokyo": 126000000,           // Japan (UTC+09:00)
+    "Asia/Seoul": 51000000,            // South Korea (UTC+09:00)
+    "Asia/Yakutsk": 310000,            // Russia (Yakutsk) (UTC+09:00)
+    "Asia/Jayapura": 400000,           // Indonesia (Eastern) (UTC+09:00)
+    "Asia/Pyongyang": 25800000,        // North Korea (UTC+09:00)
+    "Asia/Dili": 1300000,              // East Timor (UTC+09:00)
+    "Asia/Ust-Nera": 5000,             // Russia (Ust-Nera) (UTC+10:00)
+    "Pacific/Palau": 18000,            // Palau (UTC+09:00)
+    "Australia/Darwin": 150000,        // Northern Territory (UTC+09:30)
+    "Australia/Adelaide": 1400000,     // South Australia (UTC+09:30)
+    "Australia/Broken_Hill": 17000,    // New South Wales (UTC+09:30)
+    "Australia/Brisbane": 2500000,     // Queensland (UTC+10:00, no DST)
+    "Australia/Lindeman": 500,         // Queensland (UTC+10:00, no DST)
+    "Australia/Melbourne": 5100000,    // Victoria (UTC+10:00/UTC+11:00 DST)
+    "Australia/Sydney": 21500000,      // Eastern Australia (UTC+10:00)
+    "Australia/Hobart": 250000,        // Tasmania (UTC+10:00)
+    "Asia/Vladivostok": 600000,        // Russia (Vladivostok) (UTC+10:00)
+    "Pacific/Guam": 170000,            // Guam (UTC+10:00)
+    "Pacific/Port_Moresby": 9000000,   // Papua New Guinea (UTC+10:00)
+    "Pacific/Saipan": 50000,           // Northern Mariana Islands (UTC+10:00)
+    "Pacific/Chuuk": 50000,            // Micronesia (UTC+10:00)
+    "Pacific/Bougainville": 300000,    // Papua New Guinea (UTC+11:00)
+    
+    // UTC+10:30 to UTC+14:00 (Pacific Islands)
+    "Australia/Lord_Howe": 400,        // Lord Howe Island (UTC+10:30)
+    "Pacific/Noumea": 270000,          // New Caledonia (UTC+11:00)
+    "Pacific/Norfolk": 1700,           // Norfolk Island (UTC+11:00)
+    "Asia/Magadan": 90000,             // Russia (Magadan) (UTC+11:00)
+    "Pacific/Guadalcanal": 700000,     // Solomon Islands (UTC+11:00)
+    "Pacific/Efate": 85000,            // Vanuatu (UTC+11:00)
+    "Pacific/Pohnpei": 37000,          // Micronesia (UTC+11:00)
+    "Pacific/Kosrae": 6600,            // Micronesia (UTC+11:00)
+    "Pacific/Auckland": 5000000,       // New Zealand (UTC+12:00)
+    "Pacific/Fiji": 900000,            // Fiji (UTC+12:00)
+    "Pacific/Funafuti": 11000,         // Tuvalu (UTC+12:00)
+    "Pacific/Wake": 0,                 // Wake Island (UTC+12:00)
+    "Asia/Kamchatka": 180000,          // Russia (Kamchatka) (UTC+12:00)
+    "Pacific/Tarawa": 110000,          // Kiribati (UTC+12:00)
+    "Pacific/Majuro": 31000,           // Marshall Islands (UTC+12:00)
+    "Pacific/Kwajalein": 12000,        // Marshall Islands (UTC+12:00)
+    "Pacific/Nauru": 10800,            // Nauru (UTC+12:00)
+    "Pacific/Wallis": 11000,           // Wallis and Futuna (UTC+12:00)
+    "Pacific/Chatham": 600,            // Chatham Islands (UTC+12:45)
+    "Pacific/Tongatapu": 100000,       // Tonga (UTC+13:00)
+    "Pacific/Apia": 200000,            // Samoa (UTC+13:00)
+    "Pacific/Fakaofo": 1500,           // Tokelau (UTC+13:00)
+    "Pacific/Enderbury": 0,            // Kiribati (UTC+13:00)
+    "Pacific/Kanton": 0,               // Kiribati (UTC+13:00)
+    "Pacific/Kiritimati": 6500         // Kiribati (Line Islands) (UTC+14:00)
+};
+
+// Total global population covered: ~5.37 billion
+// Note: This doesn't capture the entire world population as some regions use unofficial
+// time zones or have overlapping time zone coverage
+        // --- End of Illustrative Population Data ---
+
+        function findTimezonesWithinThreshold(targetTimeString, thresholdMinutes = 15) {
+            const timeParts = targetTimeString.split(':');
+            if (timeParts.length !== 2) {
+                return { error: 'Invalid target time format. Please use HH:mm (e.g., "08:42").' };
+            }
+            const inputHour = parseInt(timeParts[0], 10);
+            const inputMinute = parseInt(timeParts[1], 10);
+
+            if (isNaN(inputHour) || isNaN(inputMinute) ||
+                inputHour < 0 || inputHour > 23 ||
+                inputMinute < 0 || inputMinute > 59) {
+                return { error: 'Invalid hour or minute value in target time. Please use HH:mm format.' };
+            }
+            const inputTotalMinutes = inputHour * 60 + inputMinute;
+
+            const availableTimezones = Intl.supportedValuesOf('timeZone');
+            const matchingTimezones = [];
+            const nowDate = new Date();
+
+            for (const timeZone of availableTimezones) {
+                try {
+                    const timeFormatter = new Intl.DateTimeFormat('sv-SE', {
+                        timeZone: timeZone,
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        hourCycle: 'h23'
+                    });
+                    const currentTimeStringInZone = timeFormatter.format(nowDate);
+                    const currentTimeParts = currentTimeStringInZone.split(':');
+                    const currentHourInZone = parseInt(currentTimeParts[0], 10);
+                    const currentMinuteInZone = parseInt(currentTimeParts[1], 10);
+
+                    if (isNaN(currentHourInZone) || isNaN(currentMinuteInZone)) {
+                        console.warn(`Could not parse time for timezone ${timeZone}: ${currentTimeStringInZone}`);
+                        continue;
+                    }
+
+                    const currentTotalMinutesInZone = currentHourInZone * 60 + currentMinuteInZone;
+                    let minuteDifference = currentTotalMinutesInZone - inputTotalMinutes;
+
+                    if (minuteDifference > 720) minuteDifference -= 1440;
+                    else if (minuteDifference < -720) minuteDifference += 1440;
+
+                    const absoluteMinuteDifference = Math.abs(minuteDifference);
+
+                    if (absoluteMinuteDifference <= thresholdMinutes) {
+                        const population = timezonePopulations[timeZone] || 0;
+                        matchingTimezones.push({
+                            timeZone: timeZone,
+                            currentTime: `${String(currentHourInZone).padStart(2, '0')}:${String(currentMinuteInZone).padStart(2, '0')}`,
+                            differenceMinutes: minuteDifference,
+                            population: population
+                        });
+                    }
+                } catch (e) {
+                    console.warn(`Could not process timezone ${timeZone}: ${e.message}`);
+                }
+            }
+
+            matchingTimezones.sort((a, b) => {
+                if (b.population !== a.population) {
+                    return b.population - a.population;
+                }
+                const diffA = Math.abs(a.differenceMinutes);
+                const diffB = Math.abs(b.differenceMinutes);
+                if (diffA !== diffB) {
+                    return diffA - diffB;
+                }
+                return a.timeZone.localeCompare(b.timeZone);
+            });
+
+            return matchingTimezones;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const localTimeInput = document.getElementById('localTime');
+            const thresholdInput = document.getElementById('threshold');
+            const findButton = document.getElementById('findButton');
+            const resultsDiv = document.getElementById('results');
+            const errorMessageDiv = document.getElementById('errorMessage');
+            const loader = document.getElementById('loader');
+            const userCurrentTimeSpan = document.getElementById('userCurrentTime');
+
+            try {
+                const nowDate = new Date();
+                const currentUserTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                const timeFormatter = new Intl.DateTimeFormat('sv-SE', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hourCycle: 'h23'
+                });
+                userCurrentTimeSpan.textContent = timeFormatter.format(nowDate) + ` (${currentUserTimeZone})`;
+            } catch (e) {
+                 userCurrentTimeSpan.textContent = "Could not determine.";
+                 console.error("Error getting user's current time:", e);
+            }
+
+            findButton.addEventListener('click', () => {
+                errorMessageDiv.textContent = '';
+                resultsDiv.innerHTML = '<p class="results-placeholder">Processing...</p>';
+                loader.style.display = 'inline-block';
+                findButton.disabled = true;
+
+                setTimeout(() => {
+                    const targetTime = localTimeInput.value;
+                    const threshold = parseInt(thresholdInput.value, 10);
+
+                    if (isNaN(threshold) || threshold < 0) {
+                        errorMessageDiv.textContent = 'Threshold must be a non-negative number.';
+                        resultsDiv.innerHTML = '<p class="results-placeholder">Results will appear here...</p>';
+                        loader.style.display = 'none';
+                        findButton.disabled = false;
+                        return;
+                    }
+
+                    const result = findTimezonesWithinThreshold(targetTime, threshold);
+
+                    if (result.error) {
+                        errorMessageDiv.textContent = result.error;
+                        resultsDiv.innerHTML = '<p class="results-placeholder">Results will appear here...</p>';
+                    } else if (result.length > 0) {
+                        resultsDiv.innerHTML = result.map(tz =>
+                            // Using new class names for result item parts
+                            `<div class="result-item">
+                                <span class="result-item-timezone">${tz.timeZone}</span>: 
+                                <span class="result-item-time">${tz.currentTime}</span>
+                                <span class="result-item-detail result-item-diff">(Diff: ${tz.differenceMinutes} min)</span>
+                                <span class="result-item-detail result-item-pop">(Pop: ~${tz.population.toLocaleString()})</span>
+                            </div>`
+                        ).join('');
+                    } else {
+                        resultsDiv.innerHTML = '<p class="results-placeholder">No timezones found within the specified threshold.</p>';
+                    }
+                    loader.style.display = 'none';
+                    findButton.disabled = false;
+                }, 50);
+            });
+        });
+    </script>
+  </body>
+</html>
