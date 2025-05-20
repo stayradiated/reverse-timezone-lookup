@@ -6,7 +6,7 @@ A simple, browser-based tool that finds timezones matching a specific target tim
 
 ## 🌐 [Live Demo](https://stayradiated.github.io/reverse-timezone-lookup)
 
-![Screenshot of Timezone Finder app](https://raw.githubusercontent.com/stayradiated/reverse-timezone-lookup/main/screenshot.png)
+![Screenshot of Timezone Finder app](./screenshot.png)
 
 ## Features
 
